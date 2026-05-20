@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onBeforeMount } from 'vue';
 import { VueDraggableNext } from 'vue-draggable-next';
 import Card from './Card.vue';
 import AddCardForm from './AddCardForm.vue';
@@ -14,12 +14,19 @@ const emit = defineEmits([
     'card-open',
 ]);
 
-const cards = computed({
-    get: () => props.list.cards ?? [],
-    set: (value) => {
-        props.list.cards = value;
-    },
+// Guarantee `list.cards` is always the SAME reactive array reference.
+// vue-draggable-next mutates `:list` in place via splice — if we ever
+// returned a freshly-created `[]` literal (e.g. via `cards ?? []`), those
+// splices would land on a detached array and silently disappear, which
+// shows up as cards "duplicating" between source and destination columns
+// on cross-list drag.
+onBeforeMount(() => {
+    if (!Array.isArray(props.list.cards)) {
+        props.list.cards = [];
+    }
 });
+
+const cards = computed(() => props.list.cards);
 
 /**
  * vue-draggable-next emits `change` with one of:

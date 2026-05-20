@@ -156,6 +156,17 @@ const cardClass = computed(() => {
 });
 </script>
 
+<!--
+    IMPORTANT: this component MUST render a single root element. When it
+    rendered as a fragment (the card <div> AND a sibling <Teleport>),
+    SortableJS / vue-draggable-next would physically move only the <div>
+    between lists while leaving the Teleport's anchor comments behind in
+    the source list. Vue's reconciliation then got confused about which
+    DOM nodes belonged to the moved component, leaving a "ghost" copy of
+    the card visible in the source column until the user refreshed.
+    Keep the <Teleport> nested INSIDE the root <div> below so the card
+    has exactly one element root.
+-->
 <template>
     <div
         class="group cursor-pointer rounded-md border bg-white p-3 shadow-sm transition hover:shadow dark:bg-slate-800"
@@ -252,16 +263,17 @@ const cardClass = computed(() => {
                 </span>
             </div>
         </div>
-    </div>
 
-    <!--
-        Profile popover — Teleported to <body> so the parent list's overflow
-        clipping doesn't hide it. Positioned manually via popoverPos so it
-        anchors right-edge-aligned, just below the clicked avatar.
-        @click.stop on the wrapper prevents the document-level outside-click
-        handler from immediately closing it.
-    -->
-    <Teleport to="body">
+        <!--
+            Profile popover — Teleported to <body> so the parent list's overflow
+            clipping doesn't hide it. Positioned manually via popoverPos so it
+            anchors right-edge-aligned, just below the clicked avatar.
+            @click.stop on the wrapper prevents the document-level outside-click
+            handler from immediately closing it. Nested INSIDE the card root
+            so the component has a single element root (see comment above the
+            <template> block for why this matters for drag-and-drop).
+        -->
+        <Teleport to="body">
         <div
             v-if="activeUser"
             class="fixed z-50 w-64 -translate-x-full overflow-hidden rounded-lg bg-white shadow-xl ring-1 ring-black/5 dark:bg-slate-800 dark:ring-white/10"
@@ -336,5 +348,6 @@ const cardClass = computed(() => {
                 </button>
             </div>
         </div>
-    </Teleport>
+        </Teleport>
+    </div>
 </template>
