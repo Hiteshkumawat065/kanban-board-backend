@@ -1,0 +1,49 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('checklists', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('card_id')
+                ->constrained('cards')
+                ->cascadeOnDelete();
+            $table->string('title', 160);
+            $table->decimal('position', 20, 10)->default(0);
+            $table->timestamps();
+
+            $table->index(['card_id', 'position']);
+        });
+
+        Schema::create('checklist_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('checklist_id')
+                ->constrained('checklists')
+                ->cascadeOnDelete();
+            $table->string('title');
+            $table->boolean('is_completed')->default(false);
+            $table->decimal('position', 20, 10)->default(0);
+            $table->foreignId('completed_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+            $table->timestamp('completed_at')->nullable();
+            $table->timestamps();
+
+            $table->index(['checklist_id', 'position']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('checklist_items');
+        Schema::dropIfExists('checklists');
+    }
+};

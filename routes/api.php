@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BoardController;
+use App\Http\Controllers\Api\CardController;
+use App\Http\Controllers\Api\ListController;
+use App\Http\Controllers\Api\WorkspaceController;
+use Illuminate\Support\Facades\Route;
+
+Route::prefix('v1')->name('api.')->group(function () {
+    Route::prefix('auth')->name('auth.')->group(function () {
+        Route::post('register', [AuthController::class, 'register'])->name('register');
+        Route::post('login', [AuthController::class, 'login'])->name('login');
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::get('me', [AuthController::class, 'me'])->name('me');
+            Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+        });
+    });
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::apiResource('workspaces', WorkspaceController::class);
+        Route::post('workspaces/{workspace}/invite', [WorkspaceController::class, 'invite'])->name('workspaces.invite');
+
+        Route::get('workspaces/{workspace}/boards', [BoardController::class, 'index'])->name('workspaces.boards.index');
+        Route::post('workspaces/{workspace}/boards', [BoardController::class, 'store'])->name('workspaces.boards.store');
+        Route::apiResource('boards', BoardController::class)->except(['index', 'store']);
+
+        Route::post('boards/{board}/lists', [ListController::class, 'store'])->name('boards.lists.store');
+        Route::patch('lists/{list}', [ListController::class, 'update'])->name('lists.update');
+        Route::patch('lists/{list}/move', [ListController::class, 'move'])->name('lists.move');
+        Route::delete('lists/{list}', [ListController::class, 'destroy'])->name('lists.destroy');
+
+        Route::post('lists/{list}/cards', [CardController::class, 'store'])->name('lists.cards.store');
+        Route::get('cards/{card}', [CardController::class, 'show'])->name('cards.show');
+        Route::patch('cards/{card}', [CardController::class, 'update'])->name('cards.update');
+        Route::patch('cards/{card}/move', [CardController::class, 'move'])->name('cards.move');
+        Route::delete('cards/{card}', [CardController::class, 'destroy'])->name('cards.destroy');
+
+        // Assignment management
+        Route::post('cards/{card}/assignees', [CardController::class, 'assign'])->name('cards.assignees.store');
+        Route::delete('cards/{card}/assignees/{user}', [CardController::class, 'unassign'])->name('cards.assignees.destroy');
+
+        // Mentor UAT actions
+        Route::post('cards/{card}/uat/approve', [CardController::class, 'approveUat'])->name('cards.uat.approve');
+        Route::post('cards/{card}/uat/rework', [CardController::class, 'requestRework'])->name('cards.uat.rework');
+    });
+});
