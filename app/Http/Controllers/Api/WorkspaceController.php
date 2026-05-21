@@ -43,7 +43,10 @@ final class WorkspaceController extends Controller
     {
         $this->authorize('view', $workspace);
 
-        $workspace->load('owner')->loadCount('boards', 'members');
+        // Eager-load members too so the "View details" modal on the
+        // workspace listing screen can render the team composition
+        // (developers / designers / QA / …) without an extra round-trip.
+        $workspace->load('owner', 'members')->loadCount('boards', 'members');
 
         return new WorkspaceResource($workspace);
     }
