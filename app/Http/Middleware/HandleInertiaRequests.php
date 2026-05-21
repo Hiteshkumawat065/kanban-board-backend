@@ -35,6 +35,29 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // Workspaces the current user belongs to. Powers the workspace
+            // switcher dropdown in the top bar across every authenticated
+            // page. Wrapped in a closure so unauthenticated requests skip
+            // the query entirely.
+            'nav' => [
+                'workspaces' => fn () => $request->user()
+                    ? $request->user()
+                        ->workspaces()
+                        ->select('workspaces.id', 'workspaces.name', 'workspaces.slug', 'workspaces.avatar_url')
+                        // Newest workspace first so the top-bar switcher
+                        // / sidebar shortcuts stay in sync with the
+                        // workspace listing screen.
+                        ->orderByDesc('workspaces.created_at')
+                        ->get()
+                        ->map(fn ($w) => [
+                            'id' => $w->id,
+                            'name' => $w->name,
+                            'slug' => $w->slug,
+                            'avatar_url' => $w->avatar_url,
+                        ])
+                        ->values()
+                    : [],
+            ],
             'ziggy' => fn () => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
