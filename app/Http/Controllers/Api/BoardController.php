@@ -12,6 +12,7 @@ use App\Models\Board;
 use App\Models\BoardList;
 use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
@@ -44,6 +45,29 @@ final class BoardController extends Controller
         $boards = $workspace->boards()
             ->active()
             ->orderBy('position')
+            ->get();
+
+        return BoardResource::collection($boards);
+    }
+
+    /**
+     * All archived ("closed") boards across every workspace the user belongs
+     * to. Powers the "View all closed boards" modal on the dashboard, so it
+     * intentionally ignores the per-workspace scope and instead filters by
+     * membership of the authenticated user.
+     *
+     * Ordered by most-recently-archived first since users typically want to
+     * find something they just closed, not something archived years ago.
+     */
+    public function closed(Request $request): AnonymousResourceCollection
+    {
+        $user = $request->user();
+        $workspaceIds = $user->workspaces()->pluck('workspaces.id')->all();
+
+        $boards = Board::whereIn('workspace_id', $workspaceIds)
+            ->whereNotNull('archived_at')
+            ->with('workspace:id,name')
+            ->orderByDesc('archived_at')
             ->get();
 
         return BoardResource::collection($boards);

@@ -8,6 +8,12 @@ const props = defineProps({
     workspaces: { type: Object, required: true },
 });
 
+function goBack() {
+    // The workspace listing sits directly under the dashboard, so "back"
+    // always returns the user there.
+    router.visit('/dashboard');
+}
+
 // --- New-workspace form state -------------------------------------
 const showForm = ref(false);
 const name = ref('');
@@ -35,7 +41,7 @@ async function create() {
             name: name.value.trim(),
             description: description.value || null,
         });
-        router.visit(`/workspaces/${data.data.id}`);
+        router.visit(`/workspaces/${data.data.id}/boards`);
     } catch (e) {
         error.value =
             e?.response?.data?.message ||
@@ -101,16 +107,7 @@ async function destroy(ws) {
         deletingId.value = null;
     }
 }
-
-// IT-professional themed background (developer code editor / multi-monitor
-// setup) with a dark overlay so the workspace cards stay readable on top.
-const bgStyle = computed(() => ({
-    backgroundImage:
-        "linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.72)), url('https://images.unsplash.com/photo-1517694712202-14dd9538aa97?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')",
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-}));
+ 
 </script>
 
 <template>
@@ -118,10 +115,38 @@ const bgStyle = computed(() => ({
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                    Your Workspaces
-                </h2>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex min-w-0 items-center gap-3">
+                    <!-- Back button -> dashboard -->
+                    <button
+                        type="button"
+                        class="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                        title="Back to dashboard"
+                        @click="goBack"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back
+                    </button>
+
+                    <div class="min-w-0">
+                        <!-- Breadcrumb navigation -->
+                        <nav class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400" aria-label="Breadcrumb">
+                            <Link href="/dashboard" class="hover:text-slate-700 dark:hover:text-slate-200">
+                                Dashboard
+                            </Link>
+                            <span class="text-slate-400 dark:text-slate-500">/</span>
+                            <span class="font-medium text-slate-700 dark:text-slate-200">
+                                Workspaces
+                            </span>
+                        </nav>
+                        <h2 class="mt-0.5 truncate text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
+                            Your Workspaces
+                        </h2>
+                    </div>
+                </div>
+
                 <button
                     type="button"
                     class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
@@ -132,7 +157,7 @@ const bgStyle = computed(() => ({
             </div>
         </template>
 
-        <div class="py-8 h-[calc(100vh-4rem)]" :style="bgStyle" > 
+        <div class="py-8"   > 
             <div class="mx-auto px-4 sm:px-6 lg:px-8">
                 <div
                     v-if="actionError"
@@ -254,7 +279,7 @@ const bgStyle = computed(() => ({
                         </div>
 
                         <Link
-                            :href="`/workspaces/${ws.id}`"
+                            :href="`/workspaces/${ws.id}/boards`"
                             class="block rounded-lg p-5"
                         >
                             <h3 class="pr-16 text-lg font-semibold text-gray-900 dark:text-gray-100">
