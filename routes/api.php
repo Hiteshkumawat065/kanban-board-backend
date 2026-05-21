@@ -26,6 +26,12 @@ Route::prefix('v1')->name('api.')->group(function () {
 
         Route::get('workspaces/{workspace}/boards', [BoardController::class, 'index'])->name('workspaces.boards.index');
         Route::post('workspaces/{workspace}/boards', [BoardController::class, 'store'])->name('workspaces.boards.store');
+
+        // MUST be declared before apiResource('boards') below — otherwise
+        // /boards/closed gets matched by the {board} route-model binding
+        // and tries to resolve a board with id "closed" (404).
+        Route::get('boards/closed', [BoardController::class, 'closed'])->name('boards.closed');
+
         Route::apiResource('boards', BoardController::class)->except(['index', 'store']);
 
         Route::post('boards/{board}/lists', [ListController::class, 'store'])->name('boards.lists.store');

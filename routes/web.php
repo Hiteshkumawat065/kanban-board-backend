@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BoardPageController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WorkspacePageController;
 use Illuminate\Support\Facades\Auth;
@@ -8,19 +9,26 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     if (Auth::check()) {
-        return redirect()->route('workspaces.index');
+        return redirect()->route('dashboard');
     }
 
     return redirect()->route('login');
 });
 
-Route::get('/dashboard', function () {
-    return redirect()->route('workspaces.index');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Workspace listing — top-level "Your Workspaces" page.
     Route::get('/workspaces', [WorkspacePageController::class, 'index'])->name('workspaces.index');
-    Route::get('/workspaces/{workspace}', [WorkspacePageController::class, 'show'])->name('workspaces.show');
+
+    // Board listing — the boards belonging to a specific workspace. The URL
+    // is nested under the workspace because a board listing only makes
+    // sense in a workspace context.
+    Route::get('/workspaces/{workspace}/boards', [BoardPageController::class, 'index'])->name('boards.index');
+
+    // Kanban board — the actual task list with Backlog / To Do columns.
     Route::get('/boards/{board}', [BoardPageController::class, 'show'])->name('boards.show');
 });
 
