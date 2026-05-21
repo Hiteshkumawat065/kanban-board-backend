@@ -153,7 +153,7 @@ final class DummyDataSeeder extends Seeder
             }
         });
 
-        $this->command->info('DummyDataSeeder: created 10 workspaces × 10 boards with tasks for demo@kanban.test');
+        $this->command->info('DummyDataSeeder: created 10 workspaces × 10 boards with tasks for demo12@yopmail.com');
     }
 
     /**
@@ -163,7 +163,7 @@ final class DummyDataSeeder extends Seeder
     private function resolveOwner(): User
     {
         return User::firstOrCreate(
-            ['email' => 'demo@kanban.test'],
+            ['email' => 'demo12@yopmail.com'],
             [
                 'name' => 'Demo User',
                 'password' => Hash::make('password'),
@@ -182,7 +182,7 @@ final class DummyDataSeeder extends Seeder
     {
         // Reuse any developers already present (created by DatabaseSeeder),
         // and top up to at least 4 random users for variety.
-        $existing = User::where('email', '!=', 'demo@kanban.test')
+        $existing = User::where('email', '!=', 'demo12@yopmail.com')
             ->orderBy('id')
             ->limit(6)
             ->get();
