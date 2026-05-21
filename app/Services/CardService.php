@@ -16,7 +16,9 @@ use App\Models\Activity;
 use App\Models\BoardList;
 use App\Models\Card;
 use App\Models\User;
+use App\Notifications\CardAssignedNotification;
 use App\Notifications\CardCompletedNotification;
+use App\Notifications\CardListMovedNotification;
 use App\Notifications\CardStageChangedNotification;
 use App\Notifications\CardUatApprovedNotification;
 use App\Notifications\CardUatReworkNotification;
@@ -147,6 +149,28 @@ final class CardService
                 $this->dispatchStageNotifications($fresh, $fromStage, $toStage, $actor);
             }
 
+            // Generic mentor-facing "task moved" mail for cross-list moves
+            // that are NOT already covered by the richer stage-specific
+            // notifications above (which fire on Todo / InProgress / Uat /
+            // Done transitions). This keeps every list change observable
+            // by the mentor without sending duplicate emails.
+            $stageHandledMail = $fromStage !== $toStage
+                && $toStage !== null
+                && in_array(
+                    $toStage,
+                    [ListStage::Todo, ListStage::InProgress, ListStage::Uat, ListStage::Done],
+                    true,
+                );
+
+            if ($fromListId !== $targetList->id && ! $stageHandledMail) {
+                $this->dispatchListMovedNotifications(
+                    $fresh,
+                    $fromList?->name ?? '—',
+                    $targetList->name,
+                    $actor,
+                );
+            }
+
             return $fresh;
         });
     }
@@ -256,10 +280,19 @@ final class CardService
 
     /**
      * Assign a user to a card (idempotent — won't duplicate).
+     *
+     * Fires a CardAssignedNotification to the assignee only on a *fresh*
+     * assignment (not when re-assigning someone who is already on the
+     * card). This avoids spamming the user with duplicate mails when
+     * the UI replays the request.
      */
     public function assign(Card $card, User $assignee, User $actor): Card
     {
         return DB::transaction(function () use ($card, $assignee, $actor) {
+            $wasAlreadyAssigned = $card->assignees()
+                ->where('users.id', $assignee->id)
+                ->exists();
+
             $card->assignees()->syncWithoutDetaching([
                 $assignee->id => [
                     'assigned_by' => $actor->id,
@@ -279,6 +312,10 @@ final class CardService
             $fresh = $card->fresh(['assignees']);
 
             broadcast(new CardUpdated($fresh))->toOthers();
+
+            if (! $wasAlreadyAssigned) {
+                $assignee->notify(new CardAssignedNotification($fresh, $actor));
+            }
 
             return $fresh;
         });
@@ -412,6 +449,36 @@ final class CardService
                 }
                 $mentor->notify(new CardCompletedNotification($card, $developer));
             }
+        }
+    }
+
+    /**
+     * Send a generic "task moved to another list" email to each
+     * assignee's mentor. One mail per (assignee, mentor) pair so the
+     * mentor sees which developer's task moved.
+     *
+     * This fires for list moves that aren't already covered by a
+     * stage-specific notification.
+     */
+    private function dispatchListMovedNotifications(Card $card, string $fromListName, string $toListName, ?User $actor): void
+    {
+        $assignees = $card->assignees;
+        if ($assignees->isEmpty()) {
+            return;
+        }
+
+        foreach ($assignees as $developer) {
+            $mentor = $developer->mentor;
+            if (! $mentor) {
+                continue;
+            }
+            $mentor->notify(new CardListMovedNotification(
+                $card,
+                $developer,
+                $fromListName,
+                $toListName,
+                $actor,
+            ));
         }
     }
 }
