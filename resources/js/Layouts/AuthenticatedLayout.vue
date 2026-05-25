@@ -347,7 +347,7 @@ function onSearchSubmit() {
 
             <!-- Workspace shortcuts — quick access to each workspace from the sidebar. -->
             <div v-if="workspaces.length" class="mt-6 px-3">
-                <div class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <!-- <div class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                     Your workspaces
                 </div>
                 <div class="space-y-0.5">
@@ -367,6 +367,7 @@ function onSearchSubmit() {
                         <span class="truncate">{{ ws.name }}</span>
                     </Link>
                 </div>
+                -->
             </div>
         </aside>
 

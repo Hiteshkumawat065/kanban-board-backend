@@ -18,6 +18,7 @@ final class CardResource extends JsonResource
             'id' => $this->id,
             'list_id' => $this->list_id,
             'board_id' => $this->board_id,
+            'task_number' => $this->task_number,
             'title' => $this->title,
             'description' => $this->description,
             'position' => $this->position,
