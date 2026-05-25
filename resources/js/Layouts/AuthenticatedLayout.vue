@@ -109,6 +109,16 @@ const navItems = computed(() => [
         active: false,
         disabled: true,
         path: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+    },  
+    // Sits directly underneath Settings — it's a "configuration" surface
+    // that admins manage rather than a per-user preference, so it lives
+    // in the same neighbourhood without being a child of Settings.
+    {
+        key: 'email-templates',
+        label: 'Email Templates',
+        href: route('email-templates.index'),
+        active: route().current('email-templates.*'),
+        path: 'M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
     },
     {
         key: 'settings',
