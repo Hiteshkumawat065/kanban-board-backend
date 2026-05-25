@@ -146,6 +146,19 @@ const priorityClass = computed(() => {
     }
 });
 
+const priorityLabel = computed(() => {
+    switch (props.card.priority) {
+        case 'high':
+            return 'High';
+        case 'low':
+            return 'Low';
+        case 'medium':
+            return 'Medium';
+        default:
+            return null;
+    }
+});
+
 // Outer-card ring/border emphasis for cards that need rework — the user
 // wants this visually loud ("red marked high priority") on the To Do list.
 const cardClass = computed(() => {
@@ -179,19 +192,29 @@ const cardClass = computed(() => {
             :style="{ backgroundColor: card.cover_color }"
         />
 
-        <div v-if="card.needs_rework || card.priority === 'high'" class="mb-2 flex flex-wrap gap-1">
+        <div class="mb-2 flex items-start justify-between gap-2">
+            <div class="flex flex-wrap gap-1">
+                <span
+                    v-if="card.needs_rework"
+                    class="inline-flex items-center gap-1 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
+                >
+                    Rework
+                </span>
+                <span
+                    v-if="priorityLabel"
+                    class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                    :class="priorityClass"
+                    :title="`Priority: ${priorityLabel}`"
+                >
+                    {{ priorityLabel }}
+                </span>
+            </div>
             <span
-                v-if="card.needs_rework"
-                class="inline-flex items-center gap-1 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
+                v-if="card.task_number"
+                class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                :title="`Task #${card.task_number}`"
             >
-                Rework
-            </span>
-            <span
-                v-if="card.priority === 'high'"
-                class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                :class="priorityClass"
-            >
-                High
+                Task #{{ card.task_number }}
             </span>
         </div>
 

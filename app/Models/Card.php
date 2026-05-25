@@ -23,6 +23,7 @@ final class Card extends Model
     protected $fillable = [
         'list_id',
         'board_id',
+        'task_number',
         'title',
         'description',
         'position',
@@ -40,10 +41,19 @@ final class Card extends Model
         'reviewed_at',
     ];
 
+    /**
+     * Per-board task number to start counting from.
+     *
+     * The first card on a brand-new board becomes #101, the second #102, etc.
+     * Each board has its own independent counter.
+     */
+    public const TASK_NUMBER_START = 101;
+
     protected function casts(): array
     {
         return [
             'position' => 'float',
+            'task_number' => 'integer',
             'due_date' => 'datetime',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
@@ -53,6 +63,38 @@ final class Card extends Model
             'priority' => CardPriority::class,
             'needs_rework' => 'boolean',
         ];
+    }
+
+    /**
+     * Auto-assign a per-board `task_number` when a card is first created.
+     *
+     * The next number is `max(task_number) + 1` for the card's board, or
+     * `TASK_NUMBER_START` if this is the first card on the board.
+     * Soft-deleted cards are included via `withTrashed()` so deleting a
+     * card doesn't free its number for reuse (avoids confusing duplicates
+     * in history / activity logs).
+     *
+     * `CardService::create` already wraps this in a DB transaction, which
+     * gives us read-consistency within a single create call. We also take
+     * a row lock on the parent board to serialize concurrent creates on
+     * the same board and prevent two cards from grabbing the same number.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $card): void {
+            if ($card->task_number !== null || $card->board_id === null) {
+                return;
+            }
+
+            Board::whereKey($card->board_id)->lockForUpdate()->first();
+
+            $max = (int) static::query()
+                ->withTrashed()
+                ->where('board_id', $card->board_id)
+                ->max('task_number');
+
+            $card->task_number = $max > 0 ? $max + 1 : self::TASK_NUMBER_START;
+        });
     }
 
     /** @return BelongsTo<BoardList, $this> */
