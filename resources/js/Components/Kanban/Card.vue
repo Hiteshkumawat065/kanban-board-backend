@@ -146,6 +146,19 @@ const priorityClass = computed(() => {
     }
 });
 
+const priorityLabel = computed(() => {
+    switch (props.card.priority) {
+        case 'high':
+            return 'High';
+        case 'low':
+            return 'Low';
+        case 'medium':
+            return 'Medium';
+        default:
+            return null;
+    }
+});
+
 // Outer-card ring/border emphasis for cards that need rework — the user
 // wants this visually loud ("red marked high priority") on the To Do list.
 const cardClass = computed(() => {
@@ -156,6 +169,17 @@ const cardClass = computed(() => {
 });
 </script>
 
+<!--
+    IMPORTANT: this component MUST render a single root element. When it
+    rendered as a fragment (the card <div> AND a sibling <Teleport>),
+    SortableJS / vue-draggable-next would physically move only the <div>
+    between lists while leaving the Teleport's anchor comments behind in
+    the source list. Vue's reconciliation then got confused about which
+    DOM nodes belonged to the moved component, leaving a "ghost" copy of
+    the card visible in the source column until the user refreshed.
+    Keep the <Teleport> nested INSIDE the root <div> below so the card
+    has exactly one element root.
+-->
 <template>
     <div
         class="group cursor-pointer rounded-md border bg-white p-3 shadow-sm transition hover:shadow dark:bg-slate-800"
@@ -168,19 +192,29 @@ const cardClass = computed(() => {
             :style="{ backgroundColor: card.cover_color }"
         />
 
-        <div v-if="card.needs_rework || card.priority === 'high'" class="mb-2 flex flex-wrap gap-1">
+        <div class="mb-2 flex items-start justify-between gap-2">
+            <div class="flex flex-wrap gap-1">
+                <span
+                    v-if="card.needs_rework"
+                    class="inline-flex items-center gap-1 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
+                >
+                    Rework
+                </span>
+                <span
+                    v-if="priorityLabel"
+                    class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                    :class="priorityClass"
+                    :title="`Priority: ${priorityLabel}`"
+                >
+                    {{ priorityLabel }}
+                </span>
+            </div>
             <span
-                v-if="card.needs_rework"
-                class="inline-flex items-center gap-1 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
+                v-if="card.task_number"
+                class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                :title="`Task #${card.task_number}`"
             >
-                Rework
-            </span>
-            <span
-                v-if="card.priority === 'high'"
-                class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                :class="priorityClass"
-            >
-                High
+                Task #{{ card.task_number }}
             </span>
         </div>
 
@@ -252,16 +286,17 @@ const cardClass = computed(() => {
                 </span>
             </div>
         </div>
-    </div>
 
-    <!--
-        Profile popover — Teleported to <body> so the parent list's overflow
-        clipping doesn't hide it. Positioned manually via popoverPos so it
-        anchors right-edge-aligned, just below the clicked avatar.
-        @click.stop on the wrapper prevents the document-level outside-click
-        handler from immediately closing it.
-    -->
-    <Teleport to="body">
+        <!--
+            Profile popover — Teleported to <body> so the parent list's overflow
+            clipping doesn't hide it. Positioned manually via popoverPos so it
+            anchors right-edge-aligned, just below the clicked avatar.
+            @click.stop on the wrapper prevents the document-level outside-click
+            handler from immediately closing it. Nested INSIDE the card root
+            so the component has a single element root (see comment above the
+            <template> block for why this matters for drag-and-drop).
+        -->
+        <Teleport to="body">
         <div
             v-if="activeUser"
             class="fixed z-50 w-64 -translate-x-full overflow-hidden rounded-lg bg-white shadow-xl ring-1 ring-black/5 dark:bg-slate-800 dark:ring-white/10"
@@ -336,5 +371,6 @@ const cardClass = computed(() => {
                 </button>
             </div>
         </div>
-    </Teleport>
+        </Teleport>
+    </div>
 </template>

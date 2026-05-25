@@ -28,6 +28,16 @@ final class BoardResource extends JsonResource
             'creator' => new UserResource($this->whenLoaded('creator')),
             'lists' => BoardListResource::collection($this->whenLoaded('lists')),
             'labels' => LabelResource::collection($this->whenLoaded('labels')),
+            // Parent workspace summary — exposed whenever the relation is
+            // loaded so the Kanban board screen can show the workspace name
+            // in its breadcrumb / back-link without an extra request.
+            'workspace' => $this->when(
+                $this->resource->relationLoaded('workspace'),
+                fn () => [
+                    'id' => $this->resource->workspace->id,
+                    'name' => $this->resource->workspace->name,
+                ],
+            ),
             'members' => $this->when(
                 $this->resource->relationLoaded('workspace')
                     && $this->resource->workspace->relationLoaded('members'),

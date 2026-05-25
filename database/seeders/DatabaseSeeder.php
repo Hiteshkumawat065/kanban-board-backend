@@ -26,7 +26,7 @@ final class DatabaseSeeder extends Seeder
         // as a mentor for the demo flow.
         // -----------------------------------------------------------------
         $demo = User::firstOrCreate(
-            ['email' => 'demo@kanban.test'],
+            ['email' => 'demo12@yopmail.com'],
             [
                 'name' => 'Demo User',
                 'password' => Hash::make('password'),
@@ -35,7 +35,7 @@ final class DatabaseSeeder extends Seeder
         );
 
         $mentor = User::firstOrCreate(
-            ['email' => 'mentor@kanban.test'],
+            ['email' => 'mentor12@yopmail.com'],
             [
                 'name' => 'Maya Mentor',
                 'password' => Hash::make('password'),
@@ -157,12 +157,18 @@ final class DatabaseSeeder extends Seeder
             'assigned_at' => now(),
         ]);
 
+        // -----------------------------------------------------------------
+        // Email template registry — default transactional templates that
+        // power DynamicMailService throughout the app.
+        // -----------------------------------------------------------------
+        $this->call(EmailTemplateSeeder::class);
+
         $this->command->info('Seeded users:');
-        $this->command->info('  demo@kanban.test       / password   (owner)');
-        $this->command->info('  mentor@kanban.test     / password   (mentor of all 4 developers)');
+        $this->command->info('  demo12@yopmail.com     / password   (owner)');
+        $this->command->info('  mentor12@yopmail.com   / password   (mentor of all 4 developers)');
         foreach ($developers as $dev) {
             $this->command->info("  {$dev->email} / password   (developer)");
         }
-        $this->command->info('"Build login page" is assigned to '.$primaryDev->email.' — drag it to trigger mails.');
+        $this->command->info('"Build login page" is assigned to ' . $primaryDev->email . ' — drag it to trigger mails.');
     }
 }
