@@ -1,4 +1,5 @@
 {
+    "name": "kanban-frontend",
     "private": true,
     "type": "module",
     "scripts": {

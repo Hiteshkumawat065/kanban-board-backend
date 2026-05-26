@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main, develop]
 
+defaults:
+  run:
+    # All shell steps default to running inside backend/. Frontend steps
+    # set their own working-directory: ./frontend explicitly.
+    working-directory: ./backend
+
 jobs:
   test:
     name: Lint, Static Analysis & Tests
@@ -44,8 +50,8 @@ jobs:
       - name: Cache Composer dependencies
         uses: actions/cache@v4
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          path: backend/vendor
+          key: composer-${{ hashFiles('backend/composer.lock') }}
           restore-keys: composer-
 
       - name: Install Composer dependencies
