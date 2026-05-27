@@ -31,10 +31,11 @@ final class BoardController extends Controller
         ['name' => 'To Do', 'stage' => ListStage::Todo],
         ['name' => 'In Progress', 'stage' => ListStage::InProgress],
         ['name' => 'UAT', 'stage' => ListStage::Uat],
-        ['name' => 'Ready To Test', 'stage' => null],
+        ['name' => 'QA Testing', 'stage' => null],
+        ['name' => 'Released On Live', 'stage' => null],
         ['name' => 'Completed', 'stage' => ListStage::Done],
         ['name' => 'Hold Tasks', 'stage' => null],
-        ['name' => 'Closed Task', 'stage' => null],
+        ['name' => 'Closed Tasks', 'stage' => null],
         ['name' => 'Other Products', 'stage' => null],
     ];
 

@@ -39,7 +39,7 @@ final class CardUatApprovedNotification extends Notification implements ShouldQu
             ->greeting("Hello {$notifiable->name},")
             ->line("{$this->mentor->name} has approved your UAT submission.")
             ->line("Task: **{$this->card->title}**")
-            ->line('You can now move this card to a Done / Ready To Test list.')
+            ->line('You can now move this card to a Done / QA Testing list.')
             ->action('Open board', $boardUrl);
     }
 
