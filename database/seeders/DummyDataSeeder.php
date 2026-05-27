@@ -100,11 +100,17 @@ final class DummyDataSeeder extends Seeder
             'Validate analytics events',
             'Stakeholder review: pricing page',
         ],
-        'Ready To Test' => [
+        'QA Testing' => [
             'Implement user authentication flow',
             'Set up CI/CD pipeline',
             'QA pass on contact form',
             'Smoke test signup flow',
+        ],
+        'Released On Live' => [
+            'Release v1.2 to production',
+            'Hotfix deployed to live',
+            'New pricing page live',
+            'Promoted feature flag to 100%',
         ],
         'Completed' => [
             'Set up project repository',
@@ -116,7 +122,7 @@ final class DummyDataSeeder extends Seeder
             'Migrate legacy reports — blocked on data team',
             'Vendor onboarding — waiting on legal',
         ],
-        'Closed Task' => [
+        'Closed Tasks' => [
             'Decommission old marketing site',
             'Sunset experimental feature flag',
         ],
@@ -227,8 +233,9 @@ final class DummyDataSeeder extends Seeder
 
     /**
      * Create 10 boards for a workspace, each with the standard Kanban
-     * workflow (Backlog / To Do / In Progress / UAT / Ready To Test /
-     * Completed / Hold / Closed / Other) and a handful of cards per list.
+     * workflow (Backlog / To Do / In Progress / UAT / QA Testing /
+     * Released On Live / Completed / Hold / Closed / Other) and a
+     * handful of cards per list.
      *
      * @param  \Illuminate\Support\Collection<int, User>  $members
      */
@@ -263,15 +270,16 @@ final class DummyDataSeeder extends Seeder
     private function seedListsFor(Board $board, User $owner, \Illuminate\Support\Collection $members): void
     {
         $listSpec = [
-            ['name' => 'Backlog',        'stage' => ListStage::Backlog],
-            ['name' => 'To Do',          'stage' => ListStage::Todo],
-            ['name' => 'In Progress',    'stage' => ListStage::InProgress],
-            ['name' => 'UAT',            'stage' => ListStage::Uat],
-            ['name' => 'Ready To Test',  'stage' => null],
-            ['name' => 'Completed',      'stage' => ListStage::Done],
-            ['name' => 'Hold Tasks',     'stage' => null],
-            ['name' => 'Closed Task',    'stage' => null],
-            ['name' => 'Other Products', 'stage' => null],
+            ['name' => 'Backlog',          'stage' => ListStage::Backlog],
+            ['name' => 'To Do',            'stage' => ListStage::Todo],
+            ['name' => 'In Progress',      'stage' => ListStage::InProgress],
+            ['name' => 'UAT',              'stage' => ListStage::Uat],
+            ['name' => 'QA Testing',       'stage' => null],
+            ['name' => 'Released On Live', 'stage' => null],
+            ['name' => 'Completed',        'stage' => ListStage::Done],
+            ['name' => 'Hold Tasks',       'stage' => null],
+            ['name' => 'Closed Tasks',     'stage' => null],
+            ['name' => 'Other Products',   'stage' => null],
         ];
 
         $position = 1.0;
