@@ -30,10 +30,36 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                // Shape the user payload here (instead of returning the
+                // raw Eloquent model) so we can attach the RBAC fields
+                // (`roles`, `permissions`) needed by the frontend
+                // `usePermissions` composable + `v-can` directive.
+                'user' => $user === null ? null : [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'avatar_url' => $user->gravatar(),
+                    'timezone' => $user->timezone,
+                    'mentor_id' => $user->mentor_id,
+                    'job_title' => $user->job_title?->value,
+                    'job_title_label' => $user->job_title?->label(),
+                    // Flat lists so the frontend can do
+                    //   permissions.includes('roles.manage')
+                    // and
+                    //   roles.includes('Super Admin')
+                    // without further reshaping.
+                    'roles' => $user->getRoleNames()->values()->all(),
+                    'permissions' => $user->getAllPermissions()
+                        ->pluck('name')
+                        ->values()
+                        ->all(),
+                    'is_super_admin' => $user->isSuperAdmin(),
+                ],
             ],
             // Workspaces the current user belongs to. Powers the workspace
             // switcher dropdown in the top bar across every authenticated

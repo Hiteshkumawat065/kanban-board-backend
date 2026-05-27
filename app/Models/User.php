@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\JobTitle;
+use App\Enums\SystemRole;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,11 +15,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 final class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     protected $fillable = [
         'name',
@@ -95,5 +97,50 @@ final class User extends Authenticatable implements MustVerifyEmail
         $hash = md5(strtolower(trim($this->email)));
 
         return "https://www.gravatar.com/avatar/{$hash}?s={$size}&d=identicon";
+    }
+
+    /**
+     * True if the user has at least one role that gets implicit access
+     * to every workspace / board (Super Admin + Admin). Used by policies
+     * + query scopes to skip the explicit membership check.
+     *
+     * NOTE: named hasGlobalAccess() rather than hasGlobalScope() because
+     * Eloquent already has a static Model::hasGlobalScope() (related to
+     * query global scopes) and PHP forbids overriding a static method
+     * with an instance method.
+     */
+    public function hasGlobalAccess(): bool
+    {
+        foreach ($this->getRoleNames() as $name) {
+            $role = SystemRole::tryFrom((string) $name);
+
+            if ($role !== null && $role->isGlobalScope()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Super Admin shortcut. Super Admins bypass every authorization check
+     * via Gate::before (registered in AppServiceProvider).
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(SystemRole::SuperAdmin->value);
+    }
+
+    /**
+     * Boards the user has explicit access to via the board_members pivot.
+     * Distinct from workspace-level access (which goes through workspaces()).
+     *
+     * @return BelongsToMany<Board, $this>
+     */
+    public function boards(): BelongsToMany
+    {
+        return $this->belongsToMany(Board::class, 'board_members')
+            ->withPivot('role')
+            ->withTimestamps();
     }
 }
