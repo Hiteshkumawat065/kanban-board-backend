@@ -25,6 +25,15 @@ final class UserResource extends JsonResource
             // workspace members into Developers / Designers / QA / Manager.
             'job_title' => $this->job_title?->value,
             'job_title_label' => $this->job_title?->label(),
+            // RBAC: flat string arrays so the SPA can do
+            //   user.permissions.includes('roles.manage')
+            // directly without further normalization.
+            'roles' => $this->getRoleNames()->values()->all(),
+            'permissions' => $this->getAllPermissions()
+                ->pluck('name')
+                ->values()
+                ->all(),
+            'is_super_admin' => $this->isSuperAdmin(),
         ];
     }
 }

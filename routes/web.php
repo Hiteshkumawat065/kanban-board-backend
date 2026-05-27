@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AdminPageController;
 use App\Http\Controllers\BoardPageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailTemplateController;
@@ -60,6 +61,26 @@ Route::middleware(['auth', 'verified'])->name('email-templates.')->group(functio
     Route::post('email-templates/{email_template}/preview', [EmailTemplateController::class, 'preview'])->name('preview');
     Route::post('email-templates/{email_template}/send-test', [EmailTemplateController::class, 'sendTest'])->name('send-test');
     Route::get('email-templates/{email_template}/logs', [EmailTemplateController::class, 'logs'])->name('logs');
+});
+
+// -------------------------------------------------------------------------
+// RBAC admin pages — Inertia screens for Roles / Permissions / Users.
+// Each section is gated by the matching permission via our EnsurePermission
+// middleware so unauthorized users get a 403 page rather than a blank UI.
+// Super Admins bypass via Gate::before.
+// -------------------------------------------------------------------------
+Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function (): void {
+    Route::middleware('permission:roles.manage')
+        ->get('roles', [AdminPageController::class, 'roles'])
+        ->name('roles.index');
+
+    Route::middleware('permission:permissions.manage')
+        ->get('permissions', [AdminPageController::class, 'permissions'])
+        ->name('permissions.index');
+
+    Route::middleware('permission:users.manage')
+        ->get('users', [AdminPageController::class, 'users'])
+        ->name('users.index');
 });
 
 require __DIR__ . '/auth.php';

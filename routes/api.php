@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\Admin\AdminUserController;
+use App\Http\Controllers\Api\Admin\PermissionController;
+use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BoardController;
 use App\Http\Controllers\Api\CardController;
@@ -52,5 +55,32 @@ Route::prefix('v1')->name('api.')->group(function () {
         // Mentor UAT actions
         Route::post('cards/{card}/uat/approve', [CardController::class, 'approveUat'])->name('cards.uat.approve');
         Route::post('cards/{card}/uat/rework', [CardController::class, 'requestRework'])->name('cards.uat.rework');
+
+        // -------------------------------------------------------------
+        // RBAC admin surface. Each sub-group requires the matching
+        // permission via our EnsurePermission middleware alias.
+        // Super Admins bypass via Gate::before so they always pass.
+        // -------------------------------------------------------------
+        Route::prefix('admin')->name('admin.')->group(function (): void {
+            Route::middleware('permission:roles.manage')->group(function (): void {
+                Route::apiResource('roles', RoleController::class);
+                Route::put('roles/{role}/permissions', [RoleController::class, 'syncPermissions'])
+                    ->name('roles.permissions.sync');
+            });
+
+            Route::middleware('permission:permissions.manage')->group(function (): void {
+                Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
+                Route::post('permissions', [PermissionController::class, 'store'])->name('permissions.store');
+                Route::delete('permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
+            });
+
+            Route::middleware('permission:users.manage')->group(function (): void {
+                Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+                Route::get('users/{user}', [AdminUserController::class, 'show'])->name('users.show');
+                Route::put('users/{user}/roles', [AdminUserController::class, 'syncRoles'])->name('users.roles.sync');
+                Route::put('users/{user}/workspaces', [AdminUserController::class, 'syncWorkspaces'])->name('users.workspaces.sync');
+                Route::put('users/{user}/boards', [AdminUserController::class, 'syncBoards'])->name('users.boards.sync');
+            });
+        });
     });
 });
