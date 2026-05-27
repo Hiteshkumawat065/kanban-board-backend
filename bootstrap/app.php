@@ -22,6 +22,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Allow SPA (same-domain Inertia frontend) to call /api/* with the
         // session cookie + XSRF-TOKEN instead of a Bearer token.
         $middleware->statefulApi();
+
+        // RBAC: short alias for our route-level permission guard. Use as
+        // ->middleware('permission:roles.manage|users.manage').
+        $middleware->alias([
+            'permission' => \App\Http\Middleware\EnsurePermission::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
