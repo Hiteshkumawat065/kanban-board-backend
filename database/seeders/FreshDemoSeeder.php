@@ -114,10 +114,15 @@ final class FreshDemoSeeder extends Seeder
             'QA the new permissions matrix',
             'Validate analytics events',
         ],
-        'Ready To Test' => [
+        'QA Testing' => [
             'Implement user authentication flow',
             'Set up CI/CD pipeline',
             'QA pass on contact form',
+        ],
+        'Released On Live' => [
+            'Release v1.2 to production',
+            'Hotfix deployed to live',
+            'New pricing page live',
         ],
         'Completed' => [
             'Set up project repository',
@@ -128,7 +133,7 @@ final class FreshDemoSeeder extends Seeder
             'Migrate legacy reports — blocked on data team',
             'Vendor onboarding — waiting on legal',
         ],
-        'Closed Task' => [
+        'Closed Tasks' => [
             'Decommission old marketing site',
             'Sunset experimental feature flag',
         ],
@@ -309,15 +314,16 @@ final class FreshDemoSeeder extends Seeder
     private function seedListsAndCardsFor(Board $board, User $owner, Collection $members): void
     {
         $listSpec = [
-            ['name' => 'Backlog',        'stage' => ListStage::Backlog],
-            ['name' => 'To Do',          'stage' => ListStage::Todo],
-            ['name' => 'In Progress',    'stage' => ListStage::InProgress],
-            ['name' => 'UAT',            'stage' => ListStage::Uat],
-            ['name' => 'Ready To Test',  'stage' => null],
-            ['name' => 'Completed',      'stage' => ListStage::Done],
-            ['name' => 'Hold Tasks',     'stage' => null],
-            ['name' => 'Closed Task',    'stage' => null],
-            ['name' => 'Other Products', 'stage' => null],
+            ['name' => 'Backlog',          'stage' => ListStage::Backlog],
+            ['name' => 'To Do',            'stage' => ListStage::Todo],
+            ['name' => 'In Progress',      'stage' => ListStage::InProgress],
+            ['name' => 'UAT',              'stage' => ListStage::Uat],
+            ['name' => 'QA Testing',       'stage' => null],
+            ['name' => 'Released On Live', 'stage' => null],
+            ['name' => 'Completed',        'stage' => ListStage::Done],
+            ['name' => 'Hold Tasks',       'stage' => null],
+            ['name' => 'Closed Tasks',     'stage' => null],
+            ['name' => 'Other Products',   'stage' => null],
         ];
 
         $position = 1.0;
