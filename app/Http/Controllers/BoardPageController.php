@@ -8,16 +8,22 @@ use App\Http\Resources\BoardResource;
 use App\Http\Resources\WorkspaceResource;
 use App\Models\Board;
 use App\Models\Workspace;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 final class BoardPageController extends Controller
 {
     /**
-     * Board listing page — every active board inside the given workspace.
-     * Lives at /workspaces/{workspace}/boards (route name: boards.index).
+     * Board listing page — only the boards the authenticated user is
+     * actually allowed to see inside the given workspace. Lives at
+     * /workspaces/{workspace}/boards (route name: boards.index).
+     *
+     * Workspace Owners/Admins (and Super Admin / Admin global roles) see
+     * every board; Members with functional roles (Developer / Designer /
+     * QA / Mentor) see only the boards they have a board_members row for.
      */
-    public function index(Workspace $workspace): Response
+    public function index(Request $request, Workspace $workspace): Response
     {
         $this->authorize('view', $workspace);
 
@@ -27,6 +33,7 @@ final class BoardPageController extends Controller
         $workspace->load(['owner', 'members'])->loadCount('boards', 'members');
 
         $boards = $workspace->boards()
+            ->visibleTo($request->user())
             ->active()
             // Newest board first — matches the workspace listing behavior
             // so users always see their most recent work at the top.
