@@ -45,7 +45,10 @@ final class DashboardController extends Controller
         // array avoids a redundant DB round trip (we already pulled the IDs above).
         $workspacesCount = count($workspaceIds);
 
-        $boardsCount = Board::whereIn('workspace_id', $workspaceIds)
+        // Use the RBAC-aware visibleTo() scope so the stat tile reflects
+        // what the user can actually open. A Developer assigned to 1 board
+        // in a 10-board workspace will see "1", not "10".
+        $boardsCount = Board::visibleTo($user)
             ->whereNull('archived_at')
             ->count();
 
@@ -61,8 +64,14 @@ final class DashboardController extends Controller
         // top whenever the user does anything that touches its membership
         // (joined, role changed, etc.). Falls back to the workspace's own
         // updated_at as a tie-breaker.
+        //
+        // The per-workspace `boards_count` is also scoped to visibleTo()
+        // so the tile shows "you can open 2 boards" instead of "the
+        // workspace has 10 boards" for a Developer-style user.
         $recentWorkspaces = $user->workspaces()
-            ->withCount(['boards' => fn ($q) => $q->whereNull('archived_at')])
+            ->withCount(['boards' => fn ($q) => $q
+                ->whereNull('archived_at')
+                ->visibleTo($user)])
             ->orderByDesc('workspace_members.updated_at')
             ->orderByDesc('workspaces.updated_at')
             ->limit(8)
@@ -77,7 +86,10 @@ final class DashboardController extends Controller
             ->values();
 
         // --- 3. Recent boards (most recently updated) ----------------------
-        $recentBoards = Board::whereIn('workspace_id', $workspaceIds)
+        // RBAC-scoped via visibleTo(): functional roles only see boards
+        // they were explicitly assigned to; managers see everything in
+        // their workspaces; global-scope roles see everything.
+        $recentBoards = Board::visibleTo($user)
             ->whereNull('archived_at')
             ->with('workspace:id,name')
             ->orderByDesc('updated_at')
@@ -94,12 +106,14 @@ final class DashboardController extends Controller
             ->values();
 
         // --- 4. Recent comments --------------------------------------------
-        // Scoped to comments on cards whose board lives in one of the user's
-        // workspaces. Eager-loads author + card + board so we can render
-        // "Hitesh on 'Build login page' (CRM Development)" without N+1 queries.
+        // Scoped to comments on cards whose board the user can actually
+        // open (so a Developer doesn't leak chatter from boards they
+        // aren't a member of). Eager-loads author + card + board so we
+        // can render "Hitesh on 'Build login page' (CRM Development)"
+        // without N+1 queries.
         $recentComments = Comment::whereHas(
             'card.board',
-            fn ($q) => $q->whereIn('workspace_id', $workspaceIds)
+            fn ($q) => $q->visibleTo($user)
                 ->whereNull('archived_at')
         )
             ->with([
@@ -129,8 +143,9 @@ final class DashboardController extends Controller
         // Only the first 5 archived boards ship with the dashboard payload;
         // the modal's "View all" fetches the full list lazily from
         // BoardController@closed so we don't bloat the initial page load
-        // for users with many archived boards.
-        $closedBoardsBase = Board::whereIn('workspace_id', $workspaceIds)
+        // for users with many archived boards. visibleTo() makes sure the
+        // preview only contains boards the user could re-open.
+        $closedBoardsBase = Board::visibleTo($user)
             ->whereNotNull('archived_at');
 
         $closedBoardsCount = (clone $closedBoardsBase)->count();

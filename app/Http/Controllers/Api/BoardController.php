@@ -39,11 +39,16 @@ final class BoardController extends Controller
         ['name' => 'Other Products', 'stage' => null],
     ];
 
-    public function index(Workspace $workspace): AnonymousResourceCollection
+    public function index(Request $request, Workspace $workspace): AnonymousResourceCollection
     {
         $this->authorize('view', $workspace);
 
+        // Apply RBAC scoping: workspace owners/admins (and Super Admin /
+        // Admin global roles) see every board; functional roles like
+        // Developer / Designer / QA only see boards they have an explicit
+        // board_members row for. See Board::scopeVisibleTo() for details.
         $boards = $workspace->boards()
+            ->visibleTo($request->user())
             ->active()
             ->orderBy('position')
             ->get();
@@ -62,10 +67,12 @@ final class BoardController extends Controller
      */
     public function closed(Request $request): AnonymousResourceCollection
     {
-        $user = $request->user();
-        $workspaceIds = $user->workspaces()->pluck('workspaces.id')->all();
-
-        $boards = Board::whereIn('workspace_id', $workspaceIds)
+        // Switched from a "every workspace I'm a member of" filter to the
+        // RBAC-aware visibleTo() scope so functional roles (Developer /
+        // Designer / QA) only see archived boards they were actually
+        // attached to via board_members, not every closed board in their
+        // workspace. Owners/Admins still see everything in their workspace.
+        $boards = Board::visibleTo($request->user())
             ->whereNotNull('archived_at')
             ->with('workspace:id,name')
             ->orderByDesc('archived_at')
