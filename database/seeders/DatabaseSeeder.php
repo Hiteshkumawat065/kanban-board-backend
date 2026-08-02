@@ -159,6 +159,13 @@ final class DatabaseSeeder extends Seeder
         ]);
 
         // -----------------------------------------------------------------
+        // RBAC: seed every Permission + the 8 default Roles + role grants
+        // and bootstrap the demo accounts as Super Admin / Admin so the
+        // existing login flow keeps working.
+        // -----------------------------------------------------------------
+        $this->call(RolePermissionSeeder::class);
+
+        // -----------------------------------------------------------------
         // Email template registry — default transactional templates that
         // power DynamicMailService throughout the app.
         // -----------------------------------------------------------------
