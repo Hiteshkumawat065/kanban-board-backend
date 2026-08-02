@@ -1,0 +1,10 @@
+image: atlassian/default-image:4
+
+pipelines:
+  branches:
+    production:
+      - step:
+          name: Sync to GitHub
+          script:
+            - git remote add github https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/hitesh-workspace/kanban-board-backend.git
+            - git push github HEAD:refs/heads/production --force
